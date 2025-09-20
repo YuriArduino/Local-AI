@@ -1,0 +1,109 @@
+# -------------------------
+# Ambientes virtuais
+# -------------------------
+/env_local_ai/
+venv/
+.venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# -------------------------
+# Segredos e arquivos de ambiente
+# -------------------------
+.env
+*.env
+.env.*        # ex: .env.local, .env.production
+
+# -------------------------
+# Cache do Python / bytecode
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.python-version
+
+# -------------------------
+# IDEs / editores
+# -------------------------
+.vscode/
+.idea/
+.cursor/
+*.sublime-project
+*.sublime-workspace
+
+# -------------------------
+# Notebooks
+# -------------------------
+.ipynb_checkpoints/
+
+# -------------------------
+# Arquivos da aplicação / saída / dados temporários
+# -------------------------
+/data/raw/
+/data/processed/
+/outputs/
+/downloads/
+/models/
+/Data/
+/*.sqlite
+*.db
+*.sqlite3
+*.log
+.env_local_ai__cache/
+*.json.corrupt
+test_state.json
+
+# -------------------------
+# OS / sistema
+# -------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------------
+# Build / packaging
+# -------------------------
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+*.whl
+
+# -------------------------
+# Python packaging / caches
+# -------------------------
+*.egg-info/
+.eggs/
+.pyre/
+.pyright/
+
+# -------------------------
+# Coverage / test reports
+# -------------------------
+.coverage
+coverage.xml
+htmlcov/
+
+# -------------------------
+# Misc / CI / secrets
+# -------------------------
+/secrets/
+/credentials/
+.aws/
+.terraform/
+terraform.tfstate*
+.venv/
+
+# -------------------------
+# Arquivos temporários de sistema
+# -------------------------
+*~
+~$*
