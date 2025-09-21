@@ -10,12 +10,16 @@ from src.tools.parser import read_reviews_from_file
 
 # Conteúdo de exemplo para o arquivo de teste
 # Inclui casos normais, linha em branco, linha com '$' no texto, e linha mal-formatada
+# E agora, um caso de resenha que se estende por múltiplas linhas.
 DUMMY_CONTENT = (
     "123$UserA$This is a great app!\n"
     "456$UserB$Não gostei, muito lento.\n"
+    # Resenha 789 se estende por múltiplas linhas
     "789$UserC$J'aime bien, mais...\n"
-    "\n"  # Linha em branco para testar se é ignorada
+    "cette partie est sur une nouvelle ligne.\n"
+    "\n"  # Linha em branco deve ser ignorada na junção
     "101$UserD$This review contains a $ dollar sign.\n"
+    # Esta linha será anexada à resenha 101, pois não corresponde ao início de uma nova resenha.
     "MalformedLineWithoutSeparator\n"
 )
 
@@ -32,8 +36,9 @@ def test_read_reviews_from_file_success(tmp_path: Path):
     reviews = read_reviews_from_file(test_file_path)
 
     # 3. Verifica os resultados com asserts
-    # A linha em branco deve ser ignorada, então esperamos 5 resenhas.
-    assert len(reviews) == 5
+    # Com a lógica de multi-linha, esperamos 4 resenhas:
+    # 1. UserA, 2. UserB, 3. UserC (multi-linha), 4. UserD (com a linha mal-formada anexada)
+    assert len(reviews) == 4
 
     # Verifica a primeira resenha
     assert isinstance(reviews[0], ReviewRaw)
@@ -41,15 +46,17 @@ def test_read_reviews_from_file_success(tmp_path: Path):
     assert reviews[0].user == "UserA"
     assert reviews[0].text == "This is a great app!"
 
-    # Verifica a resenha que contém um '$'
+    # Verifica a resenha multi-linha (UserC)
+    assert reviews[2].id == "789"
+    assert reviews[2].user == "UserC"
+    assert reviews[2].text == "J'aime bien, mais... cette partie est sur une nouvelle ligne."
+
+    # Verifica como a resenha 101 foi tratada, agora incluindo a linha seguinte
     assert reviews[3].id == "101"
     assert reviews[3].user == "UserD"
-    assert reviews[3].text == "This review contains a $ dollar sign."
-
-    # Verifica como a linha mal-formatada foi tratada pelo parser
-    assert reviews[4].id == "MalformedLineWithoutSeparator"
-    assert reviews[4].user == ""
-    assert reviews[4].text == ""
+    assert (
+        reviews[3].text == "This review contains a $ dollar sign. MalformedLineWithoutSeparator"
+    )
 
 def test_read_reviews_from_non_existent_file():
     """
