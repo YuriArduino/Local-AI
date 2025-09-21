@@ -6,6 +6,8 @@ Lê um arquivo .txt e retorna uma lista de ReviewRaw.
 from pathlib import Path
 from typing import List
 from src.models import ReviewRaw
+# Importa as funções de utilidade de texto
+from src.tools.text_utils import normalize_whitespace, detect_language
 
 def parse_txt_line(line: str) -> ReviewRaw:
     """
@@ -20,7 +22,15 @@ def parse_txt_line(line: str) -> ReviewRaw:
     if len(parts) < 3:
         parts.extend([""] * (3 - len(parts)))  # Preenche com strings vazias se necessário
     id_, user, text = parts
-    return ReviewRaw(id=id_, user=user, text=text)
+    cleaned_text = normalize_whitespace(text)
+    detected_lang = detect_language(cleaned_text)
+
+    return ReviewRaw(
+    id=id_,
+    user=user,
+    text=cleaned_text, # Usamos o texto limpo
+    language=detected_lang
+)
 
 def read_reviews_from_file(file_path: Path) -> List[ReviewRaw]:
     """
@@ -31,7 +41,7 @@ def read_reviews_from_file(file_path: Path) -> List[ReviewRaw]:
 
     Returns:
         Uma lista de objetos ReviewRaw, um para cada linha válida no arquivo.
-        
+
     Raises:
         FileNotFoundError: Se o arquivo não for encontrado no caminho especificado.
     """

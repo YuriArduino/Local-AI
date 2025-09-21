@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     # --- Caminhos do Projeto (derivados do PROJECT_ROOT) ---
     # Estes campos não vêm do .env, são calculados aqui.
     # Disponibilizamos todos os caminhos através do objeto `settings` para consistência.
+    REVIEWS_URL: str = "https://raw.githubusercontent.com/YuriArduino/Estudos_Artificial_Intelligence/main/Dados/resenhas_app.txt"
     PROJECT_ROOT: Path = PROJECT_ROOT
     DATA_DIR: Path = PROJECT_ROOT / "data"
     OUTPUTS_DIR: Path = PROJECT_ROOT / "outputs"

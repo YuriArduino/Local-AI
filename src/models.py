@@ -10,6 +10,7 @@ class ReviewRaw(BaseModel):
     id: str = Field(..., description="ID do usuário no dataset")
     user: str = Field(..., description="Nome do usuário")
     text: str = Field(..., description="Texto da resenha original")
+    language: str = Field(..., description="Idioma detectado do texto original (ex: 'en', 'pt')")
 
     model_config = {
         "extra": "forbid",
