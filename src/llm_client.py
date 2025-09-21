@@ -17,7 +17,12 @@ logger = logging.getLogger(__name__)
 class LLMClient:
     """Cliente para interagir com um modelo de linguagem grande (LLM) via API compatível com OpenAI."""
 
-    def __init__(self, base_url: str | None = None, api_key: str | None = None, model: str | None = None):
+    def __init__(
+    self,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    model: str | None = None
+):
         _base_url = base_url or settings.LLM_BASE_URL
         _api_key = api_key or settings.LLM_API_KEY
         self.model = model or settings.LLM_MODEL
