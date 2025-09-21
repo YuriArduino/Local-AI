@@ -11,20 +11,31 @@ from src.utils.file_ops import save_processed_json, save_summary_txt
 
 def test_save_processed_json(tmp_path: Path):
     """
-    Testa a função save_processed_json.
-
-    Verifica se o arquivo JSON é criado e se seu conteúdo corresponde
-    aos dados de entrada.
-
-    Args:
-        tmp_path (Path): Uma fixture do pytest que fornece um diretório temporário.
+    Testa a função save_processed_json com o modelo de dados enriquecido.
     """
-    # 1. Prepara os dados de entrada
+    # 1. Prepara os dados de entrada com TODOS os campos obrigatórios
     reviews_to_save = [
-        ReviewProcessed(user="UserA", original="Great!", translation_pt="Ótimo!", sentiment="positive"),
-        ReviewProcessed(user="UserB", original="Bad.", translation_pt="Ruim.", sentiment="negative"),
+        ReviewProcessed(
+            user="UserA",
+            original="Great!",
+            translation_pt="Ótimo!",
+            sentiment="positive",
+            language="en",
+            intensity="Alta",
+            aspects=["desempenho"],
+            explanation="O usuário expressa alta satisfação com o desempenho."
+        ),
+        ReviewProcessed(
+            user="UserB",
+            original="Bad.",
+            translation_pt="Ruim.",
+            sentiment="negative",
+            language="en",
+            intensity="Média",
+            aspects=["bugs"],
+            explanation="O usuário relata problemas e bugs."
+        ),
     ]
-    # Define o caminho do arquivo de saída dentro do diretório temporário
     output_file = tmp_path / "processed.json"
 
     # 2. Executa a função que está sendo testada
@@ -36,9 +47,28 @@ def test_save_processed_json(tmp_path: Path):
     with output_file.open("r", encoding="utf-8") as f:
         saved_data = json.load(f)
 
+    # O resultado esperado no JSON também precisa incluir os novos campos
     expected_data = [
-        {"user": "UserA", "original": "Great!", "translation_pt": "Ótimo!", "sentiment": "positive"},
-        {"user": "UserB", "original": "Bad.", "translation_pt": "Ruim.", "sentiment": "negative"},
+        {
+            "user": "UserA",
+            "original": "Great!",
+            "translation_pt": "Ótimo!",
+            "sentiment": "positive",
+            "language": "en",
+            "intensity": "Alta",
+            "aspects": ["desempenho"],
+            "explanation": "O usuário expressa alta satisfação com o desempenho."
+        },
+        {
+            "user": "UserB",
+            "original": "Bad.",
+            "translation_pt": "Ruim.",
+            "sentiment": "negative",
+            "language": "en",
+            "intensity": "Média",
+            "aspects": ["bugs"],
+            "explanation": "O usuário relata problemas e bugs."
+        },
     ]
     assert saved_data == expected_data, "O conteúdo do arquivo JSON está incorreto."
 

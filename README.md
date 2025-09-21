@@ -153,9 +153,16 @@ Lista de objetos com esse modelo (Pydantic v2):
 [
   {
     "user": "Safoan Riyad",
-    "original": "...)",
-    "translation_pt": "Gosto, mas ...",
-    "sentiment": "negative"
+    "original": ")'aimais bien ChatgpT. Mais la derniére mise 4 jour a tout gaché. Elle a tout oublié.",
+    "translation_pt": "Eu gostava mais do ChatGPT. Mas a última atualização arruinou tudo. Ela esqueceu de tudo.",
+    "sentiment": "negative",
+    "language": "fr",
+    "intensity": "Alta",
+    "aspects": [
+      "atualização",
+      "regressão de funcionalidade"
+    ],
+    "explanation": "O usuário expressa forte insatisfação com a última atualização, que removeu funcionalidades ou conhecimento prévio."
   },
   ...
 ]

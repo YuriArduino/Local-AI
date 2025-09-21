@@ -14,37 +14,34 @@ logger = logging.getLogger(__name__)
 def map_llm_response_to_processed(review_raw: ReviewRaw, llm_response: str) -> ReviewProcessed:
     """
     Converte a resposta JSON do LLM em um objeto ReviewProcessed validado,
-    usando o objeto ReviewRaw original como a fonte da verdade.
+    usando o objeto ReviewRaw original como a fonte da verdade para os dados originais.
     """
     data = safe_json_load(llm_response)
 
     try:
-        # Garante que a resposta do LLM seja um dicionário para desempacotamento.
-        if not isinstance(data, dict):
-            raise TypeError(f"A resposta do LLM não é um dicionário, mas sim um {type(data).__name__}.")
-
+        # Pydantic fará a maior parte do trabalho de validação e limpeza
         processed_review = ReviewProcessed(
             user=review_raw.user,
             original=review_raw.text,
+            language=review_raw.language,  # Passa o idioma
             **data
         )
-        logger.info("Resposta do LLM validada com sucesso para o usuário: %s", processed_review.user)
+        logger.info("Análise detalhada do LLM validada para o usuário: %s", processed_review.user)
         return processed_review
-    except (ValidationError, TypeError) as e:
+    except ValidationError as e:
         logger.warning(
-            "Erro de validação ou tipo para o usuário '%s'. JSON recebido: %s. Erros: %s",
-            review_raw.user, data, e
+            "Erro de validação Pydantic para o usuário '%s'. Erros: %s", review_raw.user, e
         )
-        # Fallback: usa o review_raw como fonte da verdade para os dados originais.
-        translation = "Dados de tradução ausentes ou inválidos."
-        if isinstance(data, dict):
-            translation = data.get("translation_pt", translation)
-
+        # O fallback agora inclui os novos campos
         return ReviewProcessed(
             user=review_raw.user,
             original=review_raw.text,
-            translation_pt=translation,
-            sentiment="neutral"
+            language=review_raw.language,
+            translation_pt=data.get("translation_pt", "Dados de tradução ausentes ou inválidos."),
+            sentiment="neutral",
+            intensity="Baixa",  # Fallback seguro
+            aspects=[],  # Fallback seguro
+            explanation="Falha na análise detalhada do LLM."  # Fallback seguro
         )
 
 def analyze_reviews(processed: Iterable[ReviewProcessed], separator: str = " || ") -> Tuple[Counter, str]:
