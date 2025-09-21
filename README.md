@@ -43,7 +43,7 @@ project_root/
 │  │  ├─ __init__.py
 │  │  ├─ parser.py                 # parsing de linhas txt -> modelos brutos
 │  │  ├─ prompt_builder.py         # montar prompt consistente para o LLM
-│  │  └─ text_utils.py             # limpeza de texto, normalização, detect-language (opcional)
+│  │  └─ text_utils.py             # limpeza de texto, normalização, detect-language
 │  │
 │  └─ utils/                       # funções infra/IO/serialização genéricas
 │     ├─ __init__.py

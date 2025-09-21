@@ -2,7 +2,7 @@
 Modelos de dados para o projeto.
 """
 
-from typing import List
+from typing import Any, List, Literal
 from pydantic import BaseModel, Field, field_validator
 
 class ReviewRaw(BaseModel):
@@ -18,8 +18,19 @@ class ReviewRaw(BaseModel):
 
     @field_validator("id", "user", "text", mode="before")
     @classmethod
-    def ensure_str(cls, v):
-        # Garante string (decodifica bytes se necessário)
+    def ensure_str(cls, v: Any) -> str:
+        """Garante que o valor de entrada seja uma string.
+
+        Este validador é aplicado antes da análise do Pydantic e converte
+        valores para string. Se o valor for `bytes`, ele é decodificado.
+        Se for `None`, é convertido para uma string vazia.
+
+        Args:
+            v: O valor do campo a ser validado.
+
+        Returns:
+            O valor convertido para string.
+        """
         if v is None:
             return ""
         if isinstance(v, bytes):
@@ -31,7 +42,7 @@ class ReviewProcessed(BaseModel):
     user: str
     original: str
     translation_pt: str
-    sentiment: str = Field(..., description="positive | negative | neutral")
+    sentiment: Literal["positive", "negative", "neutral"]
 
     model_config = {
         "extra": "forbid",
@@ -39,4 +50,5 @@ class ReviewProcessed(BaseModel):
     }
 
 class ReviewsList(BaseModel):
+    """Modelo para uma lista de resenhas processadas."""
     items: List[ReviewProcessed]
