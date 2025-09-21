@@ -115,10 +115,10 @@ export LLM_MODEL="google/gemma-3n-e4b"
 ## ▶️ Como rodar (pipeline completo)
 
 1. Configure as variáveis (ou edite `src/llm_client.py`).
-2. Execute o orquestrador:
+2. Execute o orquestrador a partir da raiz do projeto:
 
 ```bash
-python scripts/run_pipeline.py
+python -m scripts.run_pipeline
 ```
 
 Esse script fará:

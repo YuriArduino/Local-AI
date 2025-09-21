@@ -6,7 +6,6 @@ from typing import List
 from openai import (
     APIConnectionError,
     APIError,
-    APITimeoutError,
     AuthenticationError,
     OpenAI,
 )
@@ -22,7 +21,12 @@ class LLMClient:
         _base_url = base_url or settings.LLM_BASE_URL
         _api_key = api_key or settings.LLM_API_KEY
         self.model = model or settings.LLM_MODEL
-        self.client = OpenAI(base_url=_base_url, api_key=_api_key, timeout=settings.LLM_TIMEOUT)
+        self.client = OpenAI(
+            base_url=_base_url,
+            api_key=_api_key,
+            timeout=settings.LLM_TIMEOUT,
+            max_retries=settings.LLM_MAX_RETRIES,
+        )
 
     def batch_process(
         self,
@@ -30,6 +34,10 @@ class LLMClient:
         temperature: float | None = None,
     ) -> List[str]:
         """Envia uma lista de prompts e retorna as respostas brutas do LLM."""
+        logger.info(
+            "Iniciando processamento em lote com max_retries=%d.",
+            self.client.max_retries,
+        )
         outputs = []
         for i, p in enumerate(prompts):
             try:
@@ -47,22 +55,28 @@ class LLMClient:
                     #  response_format={"type": "json_object"},
                 )
                 text = resp.choices[0].message.content
-                outputs.append(text)
-            # --- MELHORIA: Captura erros fatais (conexão, auth) e aborta o batch ---
-            except (APIConnectionError, AuthenticationError, APITimeoutError) as e:
+                outputs.append(text or "") # Garante que não seja None
+            except AuthenticationError as e:
+                # Erro de autenticação é fatal. Aborta o batch.
                 logger.critical(
-                    "Erro fatal de comunicação com o LLM no prompt %d. Abortando. Erro: %s",
+                    "Erro de autenticação com a API do LLM. Verifique sua API Key. Abortando. Erro: %s", e
+                )
+                raise
+            except APIConnectionError as e: # Também captura APITimeoutError
+                # Erros de conexão/timeout após as tentativas. Loga e continua.
+                logger.error(
+                    "Não foi possível conectar ao LLM para o prompt %d após %d tentativas. Erro: %s",
                     i + 1,
+                    self.client.max_retries,
                     e,
                 )
-                # Re-lança a exceção para que o chamador (pipeline/teste) possa lidar com isso.
-                raise
-            # --- MELHORIA: Captura outros erros de API (ex: prompt inválido) e continua ---
+                outputs.append('{"translation_pt": "ERRO DE CONEXÃO", "sentiment": "neutral"}')
             except APIError as e:
+                # Outros erros de API (ex: rate limit, bad request). Loga e continua.
                 logger.error("Ocorreu um erro na API do LLM no prompt %d: %s", i + 1, e)
-                # Retorna um JSON de erro para não quebrar o pipeline
-                error_json = '{"translation_pt": "ERRO NA API", "sentiment": "neutral", "user": "ERRO", "original": "ERRO"}'
-                outputs.append(error_json)
+                # Retorna um JSON de erro para não quebrar o pipeline.
+                # O processador usará isso como fallback.
+                outputs.append('{"translation_pt": "ERRO NA API", "sentiment": "neutral"}')
 
         logger.info("Processados %d prompts pelo LLM.", len(outputs))
         return outputs

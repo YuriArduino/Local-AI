@@ -2,7 +2,7 @@
 Testes para o DocumentLoader em src.utils.loader.
 """
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
@@ -38,7 +38,7 @@ def test_prepare_github_url(input_url: str, expected_url: str):
     assert prepared_url == expected_url
 
 
-def test_carregar_success(tmp_path: Path, mocker):
+def test_carregar_success(tmp_path: Path):
     """Testa o download e salvamento bem-sucedido de um arquivo."""
     # Mock da resposta do requests.get
     mock_response = MagicMock()
@@ -46,15 +46,12 @@ def test_carregar_success(tmp_path: Path, mocker):
     mock_response.text = "conteúdo do arquivo"
     mock_response.raise_for_status.return_value = None
 
-    mock_get = mocker.patch("requests.get", return_value=mock_response)
-
-    loader = DocumentLoader(str(tmp_path))
-    urls = ["http://example.com/testfile.txt"]
-
-    downloaded_files = loader.carregar(urls)
-
-    # Verifica se a chamada de rede foi feita
-    mock_get.assert_called_once_with("http://example.com/testfile.txt", timeout=30)
+    with patch("requests.get", return_value=mock_response) as mock_get:
+        loader = DocumentLoader(str(tmp_path))
+        urls = ["http://example.com/testfile.txt"]
+        downloaded_files = loader.carregar(urls)
+        # Verifica se a chamada de rede foi feita
+        mock_get.assert_called_once_with("http://example.com/testfile.txt", timeout=30)
 
     # Verifica se o arquivo foi salvo corretamente
     expected_file = tmp_path / "testfile.txt"
@@ -63,21 +60,18 @@ def test_carregar_success(tmp_path: Path, mocker):
     assert expected_file.read_text(encoding="utf-8") == "conteúdo do arquivo"
 
 
-def test_carregar_file_already_exists(tmp_path: Path, mocker):
+def test_carregar_file_already_exists(tmp_path: Path):
     """Testa se o download é pulado se o arquivo já existir."""
     # Cria um arquivo pré-existente
     existing_file = tmp_path / "existing.txt"
     existing_file.write_text("conteúdo antigo", encoding="utf-8")
 
-    mock_get = mocker.patch("requests.get")
-
-    loader = DocumentLoader(str(tmp_path))
-    urls = ["http://example.com/existing.txt"]
-
-    downloaded_files = loader.carregar(urls)
-
-    # Verifica se a chamada de rede NÃO foi feita
-    mock_get.assert_not_called()
+    with patch("requests.get") as mock_get:
+        loader = DocumentLoader(str(tmp_path))
+        urls = ["http://example.com/existing.txt"]
+        downloaded_files = loader.carregar(urls)
+        # Verifica se a chamada de rede NÃO foi feita
+        mock_get.assert_not_called()
 
     # Verifica se o caminho do arquivo existente é retornado
     assert downloaded_files == [existing_file]
@@ -85,18 +79,15 @@ def test_carregar_file_already_exists(tmp_path: Path, mocker):
     assert existing_file.read_text(encoding="utf-8") == "conteúdo antigo"
 
 
-def test_carregar_download_failure(tmp_path: Path, mocker, caplog):
+def test_carregar_download_failure(tmp_path: Path, caplog):
     """Testa o comportamento em caso de falha no download (RequestException)."""
     # Mock do requests.get para levantar uma exceção
-    mock_get = mocker.patch("requests.get", side_effect=requests.RequestException("Erro de rede"))
-
-    loader = DocumentLoader(str(tmp_path))
-    urls = ["http://example.com/failed.txt"]
-
-    downloaded_files = loader.carregar(urls)
-
-    # Verifica se a chamada de rede foi tentada
-    mock_get.assert_called_once()
+    with patch("requests.get", side_effect=requests.RequestException("Erro de rede")) as mock_get:
+        loader = DocumentLoader(str(tmp_path))
+        urls = ["http://example.com/failed.txt"]
+        downloaded_files = loader.carregar(urls)
+        # Verifica se a chamada de rede foi tentada
+        mock_get.assert_called_once()
 
     # Verifica se nenhum arquivo foi retornado
     assert not downloaded_files
@@ -109,10 +100,10 @@ def test_carregar_download_failure(tmp_path: Path, mocker, caplog):
     assert "Erro de rede" in caplog.text
 
 
-def test_carregar_multiple_urls_mixed_results(tmp_path: Path, mocker, caplog):
+def test_carregar_multiple_urls_mixed_results(tmp_path: Path, caplog):
     """Testa o download de múltiplos arquivos com sucessos e falhas."""
     # Mock para simular respostas diferentes para URLs diferentes
-    def mock_get_logic(url, _timeout):
+    def mock_get_logic(url, **_kwargs):
         if "success.txt" in url:
             mock_response = MagicMock()
             mock_response.text = "sucesso"
@@ -122,14 +113,13 @@ def test_carregar_multiple_urls_mixed_results(tmp_path: Path, mocker, caplog):
             raise requests.RequestException("Falha no download")
         raise AssertionError(f"URL inesperada para requests.get: {url}")
 
-    mocker.patch("requests.get", side_effect=mock_get_logic)
-
     existing_file = tmp_path / "existing.txt"
     existing_file.write_text("já estava aqui", encoding="utf-8")
 
-    loader = DocumentLoader(str(tmp_path))
-    urls = ["http://example.com/success.txt", "http://example.com/failure.txt", "http://example.com/existing.txt"]
-    downloaded_files = loader.carregar(urls)
+    with patch("requests.get", side_effect=mock_get_logic):
+        loader = DocumentLoader(str(tmp_path))
+        urls = ["http://example.com/success.txt", "http://example.com/failure.txt", "http://example.com/existing.txt"]
+        downloaded_files = loader.carregar(urls)
 
     expected_files = [tmp_path / "success.txt", existing_file]
     assert set(downloaded_files) == set(expected_files)
