@@ -87,16 +87,19 @@ python-dotenv
 
 # Cliente LLM e HTTP
 openai>=1.0
-requests
+requests>=2.0
 
-# Análise de Texto
+# Análise de Texto e Dados
 langdetect
+pandas # Opcional, para futuras análises
 
 # Utilitários
 pytz
+tqdm   # Opcional, para barras de progresso
 
-# Testes
+# Framework de testes para garantir a qualidade e robustez do código.
 pytest
+
 ```
 
 ---

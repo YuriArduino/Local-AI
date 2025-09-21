@@ -1,9 +1,45 @@
+# --- Validação e Configuração ---
+# A biblioteca principal para validação de dados, garantindo que nossos modelos
+# (ReviewRaw, ReviewProcessed) sejam robustos e consistentes.
 pydantic>=2.0
+
+# Extensão do Pydantic para carregar configurações de arquivos .env e variáveis
+# de ambiente de forma validada e segura.
 pydantic-settings
-openai>=1.0
-requests>=2.0
+
+# Utilizada para carregar as variáveis do arquivo .env para o ambiente.
 python-dotenv
-pytz
-pandas
-tqdm
+
+
+# --- Cliente LLM e Comunicação HTTP ---
+# A biblioteca oficial da OpenAI, usada para interagir com APIs compatíveis
+# como LM Studio e Ollama. Inclui resiliência nativa (retries).
+openai>=1.0
+
+# A dependência fundamental para fazer todas as chamadas HTTP, usada tanto
+# pelo DocumentLoader quanto pela biblioteca openai.
+requests>=2.0
+
+
+# --- Análise e Manipulação de Texto/Dados ---
+# A biblioteca principal para a detecção de idioma das resenhas.
 langdetect
+
+# (Opcional, mas recomendado para análise futura)
+# Uma biblioteca poderosa para análise e manipulação de dados.
+# Útil se você decidir exportar para CSV ou fazer análises mais complexas.
+pandas
+
+
+# --- Utilitários ---
+# Usada para lidar com fusos horários, garantindo que os logs
+# sejam registrados com o horário de Brasília.
+pytz
+
+# (Opcional, mas ótimo para experiência do usuário)
+# Cria barras de progresso inteligentes e fáceis de usar. Pode ser
+# integrado ao loop de processamento do LLM para dar feedback visual.
+tqdm
+
+# Framework de testes para garantir a qualidade e robustez do código.
+pytest
