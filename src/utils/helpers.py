@@ -34,12 +34,18 @@ def safe_json_load(text: str) -> Dict[str, Any]:
             return json.loads(json_str)
         else:
             # Se não encontrar um objeto JSON, retorna vazio
-            logger.warning("Nenhum objeto JSON ('{...}') encontrado na resposta do LLM: %s", text[:200])
+            logger.warning(
+                "Nenhum objeto JSON ('{...}') encontrado na resposta do LLM: %s", text[:200]
+            )
             return {}
 
     except json.JSONDecodeError:
-        logger.warning("Falha ao decodificar JSON extraído. Resposta do LLM: %s", text[:200])
+        logger.warning(
+            "Falha ao decodificar JSON extraído. Resposta do LLM: %s", text[:200]
+        )
         return {}
     except (TypeError, RecursionError) as e:
-        logger.error("Erro ao decodificar JSON (tipo inválido ou recursão excessiva): %s", e)
+        logger.error(
+            "Erro ao decodificar JSON (tipo inválido ou recursão excessiva): %s", e
+        )
         return {}

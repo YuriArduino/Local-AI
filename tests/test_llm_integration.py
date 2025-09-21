@@ -71,9 +71,9 @@ def test_llm_integration_e2e():
             original_review = TEST_REVIEWS[i]
 
             try:
-                # Usa o processador para validar a resposta do LLM, assim como no pipeline real
+                # Usa o processador para validar a resposta do LLM
                 processed_review = map_llm_response_to_processed(
-                    review_raw=original_review, llm_response=response_text
+                    review_raw=original_review, llm_response=response_text,
                 )
 
                 # Valida que o tipo de retorno está correto
@@ -88,13 +88,13 @@ def test_llm_integration_e2e():
             except ValidationError as e:
                 pytest.fail(
                     f"A resposta {i+1} falhou na validação do Pydantic: {e}\n"
-                    f"Resposta: {response_text[:200]}..."
+                    f"Resposta: {response_text[:200]}...",
                 )
 
     except (APIConnectionError, APIError) as e:
         pytest.fail(
             "Falha na comunicação com o LLM. Verifique se o servidor está "
-            f"rodando e acessível. Erro: {e}"
+            f"rodando e acessível. Erro: {e}",
         )
 
     logger.info("--- Teste de integração com o LLM finalizado com sucesso ---")

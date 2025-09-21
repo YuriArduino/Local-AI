@@ -1,222 +1,201 @@
+### README.md (Versão Final Atualizada)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+# Desafio Final — Pipeline de Análise de Sentimento de Resenhas
 
-# Desafio Final — Pipeline de Processamento de Resenhas (JetGPT)
-
-README para o projeto que baixa um `.txt` de resenhas, faz parsing, envia cada resenha a um LLM local (LM Studio / Ollama), valida/normaliza com **Pydantic v2**, e gera saídas consolidadas (`processed.json` + `summary.txt`).
-
----
-
-## 🔎 Visão geral
-
-Este repositório orquestra um pipeline simples e robusto:
-
-1. Baixa a base de dados (`resenhas_app.txt`) para `data/raw/`.
-2. Lê e parseia cada linha no formato `ID$Usuário$Resenha`.
-3. Para cada resenha, envia um prompt ao LLM local pedindo **JSON** com `translation_pt` e `sentiment`.
-4. Valida e representa dados com **Pydantic v2** (`ReviewRaw`, `ReviewProcessed`).
-5. Salva os resultados em `outputs/processed.json` e um resumo em `outputs/summary.txt`.
+Este projeto implementa um pipeline de ponta a ponta que baixa resenhas de aplicativos em múltiplos idiomas, as enriquece usando um LLM local (LM Studio / Ollama) e gera saídas de análise estruturadas. O sistema é construído com foco em robustez, testabilidade e boas práticas de engenharia de software.
 
 ---
 
-## ✅ Estrutura do projeto (resumida)
+## 🔎 Visão Geral
+
+O pipeline executa as seguintes etapas de forma automatizada:
+
+1.  **Download dos Dados:** Baixa o arquivo de resenhas (`.txt`) de uma URL.
+2.  **Parsing e Enriquecimento:** Lê cada linha (`ID$Usuário$Resenha`), aplica limpeza de texto e detecta o idioma original.
+3.  **Análise com IA:** Envia cada resenha a um LLM local, solicitando uma análise detalhada em formato JSON.
+4.  **Validação e Estruturação:** Valida rigorosamente as respostas do LLM usando **Pydantic V2**, garantindo a integridade dos dados e tratando respostas mal formatadas.
+5.  **Geração de Saídas:** Salva os dados enriquecidos em `outputs/processed.json` e um resumo executivo em `outputs/summary.txt`.
+
+---
+
+## 🏆 Destaques & Boas Práticas
+
+*   **Validação Robusta com Pydantic V2:** Utiliza modelos Pydantic com validadores customizados para garantir que todos os dados, desde a entrada até a saída, sejam limpos e consistentes.
+*   **Cliente LLM Resiliente:** O `LLMClient` usa a funcionalidade de **retry nativo com backoff exponencial** da biblioteca `openai`, tornando o pipeline resiliente a falhas temporárias de rede ou da API.
+*   **Testes Abrangentes (Pytest):** O projeto possui uma suíte de testes unitários e de integração que cobre parsing, validação, operações de arquivo e a comunicação real com o LLM.
+*   **Configuração Profissional com `.env`:** Centraliza todas as configurações (chaves de API, caminhos, parâmetros do LLM) em um arquivo `.env`, mantendo o código limpo e seguro.
+*   **Qualidade de Código:** O código segue as diretrizes da PEP 8 e foi validado com linters para garantir alta legibilidade e manutenibilidade.
+
+---
+
+## ✅ Estrutura do Projeto
 
 ```
 project_root/
 ├─ README.md
 ├─ LICENSE
 ├─ requirements.txt
+├─ .env.example             # Exemplo de arquivo de configuração
 ├─ data/
 │  └─ raw/
 ├─ outputs/
 │  ├─ processed.json
 │  └─ summary.txt
 ├─ src/
-│  ├─ __init__.py
-│  ├─ config.py                    # leitura de variáveis e caminhos
-│  ├─ logging_config.py            # configuração do logger (fuso BR)
-│  ├─ models.py                    # pydantic v2 models
-│  ├─ llm_client.py                # wrapper do OpenAI / LLM local
-│  ├─ processor.py                 # mapeamento LLM -> ReviewProcessed, análise
-│  │
-│  ├─ tools/                       # funções utilitárias de domínio (parsing, prompts)
-│  │  ├─ __init__.py
-│  │  ├─ parser.py                 # parsing de linhas txt -> modelos brutos
-│  │  ├─ prompt_builder.py         # montar prompt consistente para o LLM
-│  │  └─ text_utils.py             # limpeza de texto, normalização, detect-language
-│  │
-│  └─ utils/                       # funções infra/IO/serialização genéricas
-│     ├─ __init__.py
-│     ├─ io.py                     # salvar/ler JSON/TXT/CSV
-│     ├─ file_ops.py               # helpers para paths, criação de pastas, unique names
-│     └─ helpers.py                # pequenas funções compartilhadas (ex: safe_json_load)
+│  ├─ config.py              # Carrega e valida configurações com pydantic-settings
+│  ├─ logging_config.py      # Configuração do logger (fuso BR)
+│  ├─ models.py              # Modelos Pydantic V2 (ReviewRaw, ReviewProcessed)
+│  ├─ llm_client.py          # Cliente resiliente para a API do LLM
+│  ├─ processor.py           # Valida respostas do LLM e analisa resultados
+│  ├─ tools/
+│  │  ├─ parser.py           # Lê, limpa e enriquece os dados brutos
+│  │  ├─ prompt_builder.py   # Constrói prompts dinâmicos e detalhados
+│  │  └─ text_utils.py       # Funções de limpeza de texto e detecção de idioma
+│  └─ utils/
+│     ├─ file_ops.py         # Funções de alto nível para salvar arquivos
+│     ├─ helpers.py          # Utilitários (ex: safe_json_load aprimorado)
+│     └─ loader.py           # Módulo para download de arquivos
 ├─ scripts/
-│  └─ run_pipeline.py
+│  └─ run_pipeline.py        # Orquestrador principal do pipeline
 └─ tests/
-   └─ test_parser.py
+   ├─ test_loader.py
+   ├─ test_parser.py
+   ├─ test_processor.py
+   └─ test_llm_integration.py
 ```
 
 ---
 
-## 🛠 Requisitos (mínimos)
+## 🛠 Requisitos
 
-* Python 3.10+
-* Bibliotecas (instale via `pip`):
+*   Python 3.10+
+*   Um servidor de LLM local (LM Studio ou Ollama) rodando com um modelo de chat.
 
+Instale as dependências com `pip`:
 ```bash
 pip install -r requirements.txt
 ```
 
-Exemplo de `requirements.txt`:
-
+**`requirements.txt`:**
 ```
+# Pydantic e Configurações
 pydantic>=2.0
-openai
+pydantic-settings
+python-dotenv
+
+# Cliente LLM e HTTP
+openai>=1.0
 requests
+
+# Análise de Texto
+langdetect
+
+# Utilitários
 pytz
-pandas
+
+# Testes
+pytest
 ```
 
 ---
 
 ## ⚙️ Configuração
 
-### 1) Virtualenv (opcional, recomendado)
+### 1. Crie o arquivo `.env`
+
+Na raiz do projeto, crie um arquivo chamado `.env` (você pode copiar o `.env.example`). Preencha com as informações do seu servidor LLM local:
+
+```ini
+# Configurações do LLM
+LLM_BASE_URL="http://127.0.0.1:1234/v1"
+LLM_API_KEY="lm-studio" # ou a chave que seu servidor exigir
+LLM_MODEL="google/gemma-2-9b-it" # o modelo que você carregou no servidor
+
+# Parâmetros de Resiliência e Geração
+LLM_TIMEOUT=60
+LLM_MAX_RETRIES=3
+LLM_TEMPERATURE=0.0
+LLM_MAX_TOKENS=512
+
+# Configurações de Logging
+LOG_LEVEL="INFO"
+```
+
+### 2. Ambiente Virtual (Recomendado)
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate      # macOS / Linux
-.venv\Scripts\activate         # Windows
+# .venv\Scripts\activate       # Windows
 pip install -r requirements.txt
 ```
 
-### 2) Configurar LLM local
-
-Você pode configurar a URL/API key diretamente em `src/llm_client.py` ou, preferível, via variáveis de ambiente que você leia em `src/config.py`.
-
-Recomendações de variáveis (exemplo):
-
-* `LLM_BASE_URL` — ex.: `http://127.0.0.1:1234/v1`
-* `LLM_API_KEY` — ex.: `lm-studio`
-* `LLM_MODEL` — ex.: `google/gemma-3n-e4b`
-
-Exportando (bash):
-
-```bash
-export LLM_BASE_URL="http://127.0.0.1:1234/v1"
-export LLM_API_KEY="lm-studio"
-export LLM_MODEL="google/gemma-3n-e4b"
-```
-
-> Se preferir, apenas edite os valores padrão em `src/llm_client.py`.
-
 ---
 
-## ▶️ Como rodar (pipeline completo)
+## ▶️ Como Rodar o Pipeline Completo
 
-1. Configure as variáveis (ou edite `src/llm_client.py`).
-2. Execute o orquestrador a partir da raiz do projeto:
+1.  Certifique-se de que seu servidor LLM (LM Studio / Ollama) está rodando.
+2.  Execute o script principal como um módulo a partir da **raiz do projeto**:
 
 ```bash
 python -m scripts.run_pipeline
 ```
-
-Esse script fará:
-
-* baixar o `resenhas_app.txt` para `data/raw/` (DocumentLoader),
-* ler e parsear o arquivo (reader),
-* enviar prompts ao LLM (llm\_client),
-* mapear respostas para modelos Pydantic (processor),
-* salvar `outputs/processed.json` e `outputs/summary.txt` (utils).
+A execução como módulo (`-m`) é importante para que as importações de `src` funcionem corretamente.
 
 ---
 
-## 📄 Formato dos dados
+## 📄 Formato dos Dados de Saída
 
-### Entrada (`.txt`)
+### `processed.json`
 
-Cada linha segue:
-
-```
-ID$Usuário$Resenha
-```
-
-Ex.: `53409593$Safoan Riyad$)'aimais bien ChatgpT...`
-
-No `reader` usamos `split("$", 2)` para garantir que a resenha possa conter `$`.
-
-### Saída (`processed.json`)
-
-Lista de objetos com esse modelo (Pydantic v2):
+O arquivo de saída principal, contendo uma lista de objetos JSON com a análise detalhada de cada resenha:
 
 ```json
 [
   {
     "user": "Safoan Riyad",
     "original": ")'aimais bien ChatgpT. Mais la derniére mise 4 jour a tout gaché. Elle a tout oublié.",
-    "translation_pt": "Eu gostava mais do ChatGPT. Mas a última atualização arruinou tudo. Ela esqueceu de tudo.",
+    "translation_pt": "Eu gosto mais do ChatGPT. Mas a última atualização arruinou tudo. Ela esqueceu de tudo.",
     "sentiment": "negative",
     "language": "fr",
     "intensity": "Alta",
     "aspects": [
       "atualização",
-      "regressão de funcionalidade"
+      "funcionalidade",
+      "qualidade"
     ],
-    "explanation": "O usuário expressa forte insatisfação com a última atualização, que removeu funcionalidades ou conhecimento prévio."
-  },
-  ...
+    "explanation": "A resenha expressa forte insatisfação com a atualização mais recente, indicando que ela causou perda de funcionalidades e impactou negativamente a experiência do usuário."
+  }
 ]
 ```
 
-### Resumo (`summary.txt`)
+### `summary.txt`
 
-Contém:
-
-* contagem por sentimento (positive / negative / neutral)
-* string concatenada com todas as resenhas (separador configurável)
+Um resumo executivo contendo a contagem de sentimentos e o texto original de todas as resenhas concatenadas.
 
 ---
 
-## 🧠 Prompt sugerido (muito importante)
+## 🧠 Prompt Utilizado
 
-Peça explicitamente **apenas JSON** para facilitar parsing. Exemplo (já usado no `scripts/run_pipeline.py`):
+O pipeline constrói um prompt dinâmico e detalhado para extrair o máximo de informação do LLM, incluindo a dica de idioma detectado para melhorar a precisão:
 
 ```
-Por favor retorne um JSON com chaves 'translation_pt' e 'sentiment' para a resenha abaixo.
+Sua tarefa é fazer uma análise detalhada da resenha de um aplicativo e retornar um objeto JSON.
+O idioma original da resenha foi detectado como 'fr'.
 
-Resenha: "TEXTO_DA_RESENHA"
+Resenha original: ")'aimais bien ChatgpT. Mais la derniére mise 4 jour a tout gaché. Elle a tout oublié."
 
-Responda somente com JSON. 'sentiment' deve ser 'positive', 'negative' ou 'neutral'.
+O JSON de saída deve ter EXATAMENTE as seguintes chaves:
+  - "translation_pt": string (a tradução da resenha para o português do Brasil).
+  - "sentiment": string (deve ser 'positive', 'negative' ou 'neutral').
+  - "intensity": string (a intensidade do sentimento: 'Alta', 'Média' ou 'Baixa').
+  - "aspects": uma lista de 1 a 3 palavras-chave em português que resumem os pontos principais (ex: ["usabilidade", "bugs", "preço"]).
+  - "explanation": uma frase curta em português explicando o porquê da classificação de sentimento.
+
+Responda APENAS com o objeto JSON, sem nenhum texto ou formatação adicional.
 ```
-
-Se o LLM responder fora do formato JSON, o `processor` aplica fallback (sentiment = `neutral`) — mas é melhor garantir respostas JSON.
-
----
-
-## 🧩 Observações & boas práticas
-
-* **Pydantic v2**: usamos `model_dump()` para serializar os modelos.
-* **Robustez no parsing**: linhas mal-formatadas são logadas e preenchidas com strings vazias quando possível.
-* **Logging**: `src/logging_config.py` configura logs no fuso `America/Sao_Paulo`.
-* **Batching**: o `LLMClient.batch_process` faz uma chamada por prompt. Se sua API suportar batch nativo, optimize para reduzir latência.
-* **Rate limits / retry**: dependendo do LLM local e do número de resenhas, considere adicionar retries/exponential backoff no client.
-
----
-
-## 🔧 Problemas comuns & solução rápida
-
-* **Arquivo não baixado**: verifique URL (use `?raw=true` em GitHub) e conectividade. O `DocumentLoader` já adiciona `?raw=true` quando detecta `github.com`.
-* **Erros de decodificação**: abrimos arquivos com `encoding='utf-8', errors='ignore'` para evitar falhas com caracteres estranhos.
-* **LLM retornando texto, não JSON**: ajuste o prompt para reforçar "Responda somente com JSON" e reduza temperatura. Use `temperature=0.0`.
-
----
-
-## Próximos passos / melhorias sugeridas
-
-* Implementar retries e controle de taxa (backoff) no `LLMClient`.
-* Adicionar testes unitários para `reader.parse_line_to_raw` e para validações Pydantic.
-* Exportar outputs adicionais (CSV, análises por idioma, top N palavras).
-* Automatizar import para Trello (ex.: criar checklist de progresso com base no `summary.txt`) — se quiser, posso gerar esse script.
 
 ---
 

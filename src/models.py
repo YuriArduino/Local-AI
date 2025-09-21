@@ -46,10 +46,20 @@ class ReviewProcessed(BaseModel):
     sentiment: Literal["positive", "negative", "neutral"]
 
     # --- NOVOS CAMPOS DE ANÁLISE ---
-    language: str = Field(..., description="Idioma detectado do texto original (ex: 'en', 'pt')")
-    intensity: Literal["Alta", "Média", "Baixa"] = Field(..., description="A intensidade do sentimento expresso.")
-    aspects: List[str] = Field(default_factory=list, description="Lista de palavras-chave ou aspectos mencionados na resenha.")
-    explanation: str = Field(..., description="Uma breve explicação em português sobre a análise de sentimento.")
+    language: str = Field(
+        ..., description="Idioma detectado do texto original (ex: 'en', 'pt')"
+    )
+    intensity: Literal["Alta", "Média", "Baixa"] = Field(
+        ..., description="A intensidade do sentimento expresso."
+    )
+    aspects: List[str] = Field(
+        default_factory=list,
+        description="Lista de palavras-chave ou aspectos mencionados na resenha.",
+    )
+    explanation: str = Field(
+        ...,
+        description="Uma breve explicação em português sobre a análise de sentimento.",
+    )
 
     model_config = {
         "extra": "forbid",

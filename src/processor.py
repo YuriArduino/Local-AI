@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 def map_llm_response_to_processed(review_raw: ReviewRaw, llm_response: str) -> ReviewProcessed:
     """
     Converte a resposta JSON do LLM em um objeto ReviewProcessed validado,
-    usando o objeto ReviewRaw original como a fonte da verdade para os dados originais.
+    usando o objeto ReviewRaw original como a fonte da verdade para os
+    dados originais.
     """
     data = safe_json_load(llm_response)
 
@@ -26,7 +27,9 @@ def map_llm_response_to_processed(review_raw: ReviewRaw, llm_response: str) -> R
             language=review_raw.language,  # Passa o idioma
             **data
         )
-        logger.info("Análise detalhada do LLM validada para o usuário: %s", processed_review.user)
+        logger.info(
+            "Análise detalhada do LLM validada para o usuário: %s", processed_review.user
+        )
         return processed_review
     except ValidationError as e:
         logger.warning(
@@ -36,16 +39,23 @@ def map_llm_response_to_processed(review_raw: ReviewRaw, llm_response: str) -> R
         return ReviewProcessed(
             user=review_raw.user,
             original=review_raw.text,
-            language=review_raw.language,
-            translation_pt=data.get("translation_pt", "Dados de tradução ausentes ou inválidos."),
+            translation_pt=data.get(
+                "translation_pt", "Dados de tradução ausentes ou inválidos."
+            ),
             sentiment="neutral",
+            language=review_raw.language,
             intensity="Baixa",  # Fallback seguro
             aspects=[],  # Fallback seguro
             explanation="Falha na análise detalhada do LLM."  # Fallback seguro
         )
 
-def analyze_reviews(processed: Iterable[ReviewProcessed], separator: str = " || ") -> Tuple[Counter, str]:
-    """Analisa uma lista de resenhas processadas para contar sentimentos e concatenar textos."""
+def analyze_reviews(
+    processed: Iterable[ReviewProcessed],
+    separator: str = " || "
+) -> Tuple[Counter, str]:
+    """
+    Analisa uma lista de resenhas processadas para contar sentimentos e concatenar textos.
+    """
     processed_list = list(processed)
     logger.info("Analisando %d resenhas processadas...", len(processed_list))
     counts = Counter(r.sentiment for r in processed_list)

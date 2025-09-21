@@ -25,9 +25,18 @@ def test_document_loader_initialization(tmp_path: Path):
 @pytest.mark.parametrize(
     "input_url, expected_url",
     [
-        ("https://github.com/user/repo/blob/main/file.txt", "https://github.com/user/repo/blob/main/file.txt?raw=true"),
-        ("https://github.com/user/repo/blob/main/file.txt?raw=true", "https://github.com/user/repo/blob/main/file.txt?raw=true"),
-        ("https://raw.githubusercontent.com/user/repo/main/file.txt", "https://raw.githubusercontent.com/user/repo/main/file.txt"),
+        (
+            "https://github.com/user/repo/blob/main/file.txt",
+            "https://github.com/user/repo/blob/main/file.txt?raw=true",
+        ),
+        (
+            "https://github.com/user/repo/blob/main/file.txt?raw=true",
+            "https://github.com/user/repo/blob/main/file.txt?raw=true",
+        ),
+        (
+            "https://raw.githubusercontent.com/user/repo/main/file.txt",
+            "https://raw.githubusercontent.com/user/repo/main/file.txt",
+        ),
         ("https://example.com/file.txt", "https://example.com/file.txt"),
     ]
 )
@@ -118,7 +127,11 @@ def test_carregar_multiple_urls_mixed_results(tmp_path: Path, caplog):
 
     with patch("requests.get", side_effect=mock_get_logic):
         loader = DocumentLoader(str(tmp_path))
-        urls = ["http://example.com/success.txt", "http://example.com/failure.txt", "http://example.com/existing.txt"]
+        urls = [
+            "http://example.com/success.txt",
+            "http://example.com/failure.txt",
+            "http://example.com/existing.txt",
+        ]
         downloaded_files = loader.carregar(urls)
 
     expected_files = [tmp_path / "success.txt", existing_file]
